@@ -5,9 +5,6 @@ import pickle
 from functions import compute_border_contacts
 import vigra
 
-def printname(name):
-    print name
-
 if __name__ == "__main__":
     pass
     f = h5py.File("/media/axeleik/EA62ECB562EC8821/data/ground_truth.h5", mode='r')
