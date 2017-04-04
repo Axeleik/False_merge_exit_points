@@ -26,7 +26,6 @@ if __name__ == "__main__":
     for i in bc:
         if len(bc[i])<2:
             continue
-        count.append(i)
         compare=[]
         for x in bc[i]:
             compare.append(ground_truth[x[0],x[1],x[2]])
