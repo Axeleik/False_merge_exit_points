@@ -35,7 +35,7 @@ if __name__ == "__main__":
     print "shape: ", ground_truth.shape
     bc = comparison(segmentation, dt_segmentation,ground_truth,segmentation_resolved)
 
-    print "bc: ",len(bc)
+    print "bc: ",bc
 
 
 

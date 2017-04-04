@@ -204,14 +204,16 @@ def comparison(
         for x in list_gt_labels:
             a=[i for i in list_gt if x in list_gt[i][0]]
             correspondance_gt.append(a)
-            print a
+
 
         for x in list_seg_res_labels:
             a=[i for i in list_seg_res if x in list_seg_res[i][0]]
             correspondance_seg_res.append(a)
 
         seg_res_longest=max(correspondance_seg_res, key=len)
+        print seg_res_longest
         gt_longest = max(correspondance_gt, key=len)
+        print gt_longest
 
         if seg_res_longest == gt_longest:
             return_list[label]=True
