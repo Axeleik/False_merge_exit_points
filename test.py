@@ -2,8 +2,7 @@ import h5py
 import numpy as np
 import copy
 import pickle
-#from functions import compute_border_contacts
-from neu import comparison
+from functions import comparison
 
 import vigra
 
@@ -26,16 +25,19 @@ if __name__ == "__main__":
     segmentation = np.array(h["z/1/test"])
     segmentation_resolved = np.array(g["z/1/test"])
 
-    edge_volume_segmentation = np.concatenate(
-        [vigra.analysis.regionImageToEdgeImage(segmentation[:, :, z])[:, :, None] for z in
-         xrange(segmentation_resolved.shape[2])],
-        axis=2)
-    dt_segmentation = vigra.filters.distanceTransform(edge_volume_segmentation, pixel_pitch=[1., 1., 10.], background=True)
 
-    print "shape: ", ground_truth.shape
-    bc = comparison(segmentation, dt_segmentation,ground_truth,segmentation_resolved)
+    bc = comparison(segmentation,ground_truth,segmentation_resolved)
 
-    print "bc: ",bc
+    print "bc: ",bc,"\n\n","Length: ",len(bc)
+    x=0
+    for i in bc.keys():
+        if bc[i] == False:
+            print i,": ", "False"
+            x=x+1
+
+    print "Length_False: ", x
+
+
 
 
 

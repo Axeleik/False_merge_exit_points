@@ -1,6 +1,30 @@
 import numpy as np
 import vigra
 
+def compute_border_contacts(
+        segmentation,
+        disttransf
+):
+
+    faces_seg, bounds = get_faces_with_neighbors(segmentation)
+    faces_dt, _ = get_faces_with_neighbors(disttransf)
+
+
+
+
+    centroids = {key: find_centroids(val, faces_dt[key], bounds[key]) for key, val in faces_seg.iteritems()}
+    print "centroids1.0: ", len(centroids)
+    print "centroids1: ", len(centroids["xyf"]) + len(centroids["xyb"]) + len(centroids["yzb"]) + len(centroids["xzf"]) + len(centroids["yzf"]) + len(centroids["xzb"])
+    centroids = translate_centroids_to_volume(centroids, segmentation.shape)
+    print "centroids2: ", len(centroids)
+    c = 0
+    for i in centroids:
+
+        c += len(centroids[i])
+    print c
+    return centroids
+
+
 def get_faces_with_neighbors(image):
 
     # --- XY ---
@@ -97,9 +121,9 @@ def get_faces_with_neighbors(image):
     return faces, bounds
 
 
-def find_centroids(seg, dt, bounds,centroids):
+def find_centroids(seg, dt, bounds):
 
-
+    centroids = {}
 
     for lbl in np.unique(seg[bounds])[1:]:
 
@@ -143,106 +167,57 @@ def find_centroids(seg, dt, bounds,centroids):
                 coords = [int(np.mean(x)) for x in coords]
 
                 if lbl in centroids.keys():
-                    centroids[lbl].append(curobj[bounds])
+                    centroids[lbl].append(coords)
 
                 else:
-                    centroids[lbl] = [curobj[bounds]]
-
-
-    return centroids
-
-
-def compute_border_contacts(
-        segmentation,
-        disttransf
-):
-
-    centroids={}
-
-    faces_seg, bounds = get_faces_with_neighbors(segmentation)
-    faces_dt, _ = get_faces_with_neighbors(disttransf)
-
-
-
-    for key, val in faces_seg.iteritems():
-        centroids=find_centroids(val, faces_dt[key], bounds[key],centroids)
+                    centroids[lbl] = [coords]
 
     return centroids
 
-def comparison(
-        segmentation, dt_segmentation, ground_truth, segmentation_resolved
+def translate_centroids_to_volume(centroids, volume_shape):
+    rtrn_centers = {}
 
-):
-    centroids=compute_border_contacts(segmentation, dt_segmentation)
-    return_list={}
+    for orientation, centers in centroids.iteritems():
 
-    for label in centroids:
-        i=0
-        list_gt = {}
-        list_seg_res = {}
 
-        for exit in centroids[label]:
-            if i in list_gt.keys():
-                list_gt[i].append(np.unique(ground_truth[exit]))
-                list_seg_res[i].append(np.unique(segmentation_resolved[exit]))
+        if orientation == 'xyf':
+            centers = {
+                lbl: [center + [0] for center in centers_in_lbl]
+                for lbl, centers_in_lbl in centers.iteritems()
+            }
+            print "centers: ", centers
+        elif orientation == 'xyb':
+            centers = {
+                lbl: [center + [volume_shape[2]-1] for center in centers_in_lbl]
+                for lbl, centers_in_lbl in centers.iteritems()
+            }
+        elif orientation == 'xzf':
+            centers = {
+                lbl: [[center[0], 0, center[1]] for center in centers_in_lbl]
+                for lbl, centers_in_lbl in centers.iteritems()
+            }
+        elif orientation == 'xzb':
+            centers = {
+                lbl: [[center[0], volume_shape[1]-1, center[1]] for center in centers_in_lbl]
+                for lbl, centers_in_lbl in centers.iteritems()
+            }
+        elif orientation == 'yzf':
+            centers = {
+                lbl: [[0, center[0], center[1]] for center in centers_in_lbl]
+                for lbl, centers_in_lbl in centers.iteritems()
+            }
+        elif orientation == 'yzb':
+            centers = {
+                lbl: [[volume_shape[0]-1, center[0], center[1]] for center in centers_in_lbl]
+                for lbl, centers_in_lbl in centers.iteritems()
+            }
 
+        for key, val in centers.iteritems():
+            if key in rtrn_centers:
+                rtrn_centers[key].extend(val)
             else:
-                list_gt[i] = [np.unique(ground_truth[exit])]
-                list_seg_res[i] = [np.unique(segmentation_resolved[exit])]
-            i=i+1
-        list_gt_labels=[]
-        list_seg_res_labels = []
-        for i in list_gt.values():
-            for x in i[0]:
-                list_gt_labels.append(x)
-        for i in list_seg_res.values():
-            for x in i[0]:
-                list_seg_res_labels.append(x)
-        correspondance_gt=[]
-        correspondance_seg_res = []
+                rtrn_centers[key] = val
 
-        for x in list_gt_labels:
-            a=[i for i in list_gt if x in list_gt[i][0]]
-            correspondance_gt.append(a)
-
-
-        for x in list_seg_res_labels:
-            a=[i for i in list_seg_res if x in list_seg_res[i][0]]
-            correspondance_seg_res.append(a)
-
-        seg_res_longest=max(correspondance_seg_res, key=len)
-        print seg_res_longest
-        gt_longest = max(correspondance_gt, key=len)
-        print gt_longest
-
-        if seg_res_longest == gt_longest:
-            return_list[label]=True
-        else:
-            return_list[label]=False
-
-
-
-
-
-    return return_list
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return rtrn_centers
 
 
